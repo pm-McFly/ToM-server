@@ -5,6 +5,12 @@ packages/*/example/*.js*
 *.map
 .nx/
 packages/matrix-identity-server/matrix-server/synapse-data
+**/.env
 
 # nix/direnv
 .direnv/
+
+# docker dev env
+.compose/synapse/media_store/
+.compose/**/*.db*
+

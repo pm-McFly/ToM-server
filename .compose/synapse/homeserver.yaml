@@ -1,0 +1,153 @@
+# Configuration file for Synapse.
+server_name: "docker.localhost"
+
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# Using a SQLite driver for tests
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+
+# For PG Testing
+# database:
+#   name: psycopg2
+#   args:
+#     user: synapse
+#     password: 'synapse!1'
+#     database: synapse
+#     host: db
+#     # We use generic workers, and each of them copy these configurations. Here we have 4 workers + main
+#     # Thus we can reduce min and max.
+#     cp_min: 2
+#     cp_max: 4
+#
+#     # seconds of inactivity after which TCP should send a keepalive message to the server
+#     keepalives_idle: 10
+#     # the number of seconds after which a TCP keepalive message that is not
+#     # acknowledged by the server should be retransmitted
+#     keepalives_interval: 10
+#     # the number of TCP keepalives that can be lost before the client's connection
+#     # to the server is considered dead
+#     keepalives_count: 3
+#
+#     # NOTE :  max_connections is 100 by default. It must be higher than cp_max * (num of workers + 1 (for main))
+#     # max_connections: 100
+#
+#     # TUNING
+#     # shared_buffers
+#     # effective_cache_size
+#     # work_mem
+#     # maintenance_work_mem
+#     # autovacuum_work_mem
+#     # https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
+
+# Number of events to cache in memory
+event_cache_size: '10K'
+
+
+log_config: "/data/docker.localhost.log.config"
+media_store_path: /data/media_store
+
+enable_metrics: false
+report_stats: false
+
+registration_shared_secret: "bH_8Ot;-4INv:yfXHZ1.ul_XP2KuL5xC-R4x#.9G6.+6J0^-V#"
+macaroon_secret_key: "i8dF@4#7uLt~ZJC@m@HqxfXt+-Y^rvI5yF3CC;8LbXwNLWO9YM"
+form_secret: ":m_kP~38:lPnlfO2S8lhSrMRy8T52~dT=e35X+jCMHNz-pxIoZ"
+
+signing_key_path: "/data/docker.localhost.signing.key"
+
+# To rotate signing keys
+old_signing_keys: {}
+key_refresh_interval: '1d' # 1 Day.
+
+bcrypt_rounds: 12
+allow_guest_access: False
+enable_registration: false
+
+trusted_third_party_id_servers:
+  - matrix.org
+  - vector.im
+  - riot.im
+
+# Trusted servers to download signing keys from
+#
+# If matrix.org is really allowed here:
+#suppress_key_server_warning: true
+trusted_key_servers:
+  - server_name: 'matrix.org'
+    accept_keys_insecurely: true
+  #- server_name: "twake_root_server"
+  #  verify_keys:
+  #    "ed25519:auto": "aabbccddeeff..."
+
+
+## SSO
+
+password_config:
+  enabled: false
+
+# Old fashion: prefer separated oidc_providers files
+oidc_providers:
+  - idp_id: twake
+    idp_name: Connect with Twake
+    enabled: true
+    issuer: 'https://auth.docker.localhost'
+    client_id: 'matrix1'
+    client_secret: 'matrix1'
+    scopes: ['openid', 'profile', 'email']
+
+    discover: true
+    # Test only
+    #authorization_endpoint: "https://auth.docker.localhost/oauth2/authorize"
+    #token_endpoint: "https://auth.docker.localhost/oauth2/token"
+    #userinfo_endpoint: "https://auth.docker.localhost/oauth2/userinfo"
+    #jwks_uri: "https://auth.docker.localhost/oauth2/jwks"
+
+    backchannel_logout_enabled: true
+    backchannel_logout_is_soft: true
+
+    user_profile_method: 'userinfo_endpoint'
+    user_mapping_provider:
+      config:
+        subject_claim: 'sub'
+        localpart_template: '{{ user.preferred_username }}'
+        display_name_template: '{{ user.name }}'
+
+# Whether to allow non server admin to create groups on this server
+enable_group_creation: false
+#group_creation_prefix: "unofficial/"
+
+user_directory:
+  search_all_users: true
+
+e2e_key_export: true
+encryption_enabled: true
+
+# FOR TEST ONLY
+accept_keys_insecurely: true
+federation_verify_certificates: false
+
+# TODO: identity_server integration
+# * invite_client_location
+# * account_threepid_delegates
+default_identity_server: https://tom.docker.localhost
+
+# Custom templates for SSO redirect, among others.
+templates:
+  custom_template_directory: /data/templates
+
+# Used for auto-registrating the admin. NOTE : this string MUST NOT be shared anywhere!
+registration_shared_secret: astringthatyoumustnevershare
+
+# vim:ft=yaml

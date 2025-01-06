@@ -1,0 +1,88 @@
+# File              : docker-compose.yml
+# License           : AGPL-3.0-or-later
+# Author            : Pierre 'McFly' Marty <pmarty@linagora.com>
+# Date              : 06.01.2025
+# Last Modified Date: 06.01.2025
+# Last Modified By  : Pierre 'McFly' Marty <pmarty@linagora.com>
+
+services:
+
+  synapse:
+    container_name: synapse
+    image: matrixdotorg/synapse
+    restart: unless-stopped
+    env_file:
+      - path: .compose/synapse/.env
+        required: true
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-cert.pem
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-cert.pem
+    volumes:
+      - ./.compose/synapse/:/data
+      - ./.compose/certs/:/etc/ssl/certs
+
+  auth:
+    container_name: auth
+    image: yadd/lemonldap-ng-portal
+    volumes:
+      - ./.compose/certs/:/etc/ssl/certs
+      - ./.compose/certs/_wildcard.docker.localhost.pem:/etc/nginx/ssl/server.pem
+      - ./.compose/certs/_wildcard.docker.localhost-key.pem:/etc/nginx/ssl/server.key
+      - ./.compose/lemon/ssl.conf:/etc/nginx/sites-enabled/0000default.conf
+      - ./.compose/lemon/root.conf:/etc/nginx/sites-enabled/root.conf
+      - ./.compose/synapse/wellknownserver.conf:/var/www/matrix-server.json
+      - ./.compose/synapse/wellknownclient.conf:/var/www/matrix-client.json
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - SSODOMAIN=docker.localhost
+      - PORTAL=https://auth.docker.localhost
+      - LOGLEVEL=debug
+      - LOGGER=stderr
+      - USERLOGGER=stderr
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  # tom:
+  #   container_name: tom
+  #   image: node:alpine
+  #   command: node /usr/src/app/server.mjs
+  #   volumes:
+  #     - ./:/usr/src/app
+  #   depends_on:
+  #     synapse:
+  #       condition: service_started
+  #     db:
+  #       condition: service_healthy
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+  #   ports:
+  #     - 3000:3000
+  #   environment:
+  #     - SERVER_NAME=docker.localhost
+  #     - BASE_URL=https://tom.docker.localhost/
+  #     - OIDC_ISSUER=https://auth.docker.localhost/
+  #     - ADDITIONAL_FEATURES=true
+  #     - USERDB_ENGINE=sqlite
+  #     - DATABASE_ENGINE=sqlite
+  #     - DATABASE_USER=twake
+  #     - DATABASE_PASSWORD=twake!1
+  #     - DATABASE_HOST=db
+  #     - DATABASE_NAME=twake
+  #     - LOG_LEVEL=debug
+  #     - LOG_TRANSPORTS=Console
+  #     - MATRIX_SERVER=matrix.docker.localhost
+  #     - MATRIX_DATABASE_ENGINE=sqlite
+  #     - MATRIX_DATABASE_HOST=db
+  #     - MATRIX_DATABASE_NAME=synapse
+  #     - MATRIX_DATABASE_PASSWORD=synapse!1
+  #     - MATRIX_DATABASE_USER=synapse
+  #     - TEMPLATE_DIR=/usr/src/app/packages/tom-server/templates
+  #     - TRUSTED_PROXIES=uniquelocal
+  #     - NODE_TLS_REJECT_UNAUTHORIZED=0

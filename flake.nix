@@ -21,10 +21,18 @@
 
           # Packages to install
           buildInputs = [
+            ## Global Requirements
             nodejs
             typescript
 
-            # utils
+            ## tools
+            sqlite    # For local db support
+
+            # Local SSL tooling
+            mkcert    # Cert local toolchain
+            openssl
+
+            ## dev tools
             npm-check
             npm-check-updates
             npm-lockfile-fix
